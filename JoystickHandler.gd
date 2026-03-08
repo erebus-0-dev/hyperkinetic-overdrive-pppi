@@ -1,20 +1,16 @@
-extends Node
+extends ScrollContainer
 
-# синглтон для спавна игрока
+## Список уровней. Содержит карточки уровней (LevelCard).
+class_name LevelSelectionList
 
-var in_game: bool = false
+@export var level_selection_menu:Control ## меню выбора уровня, которое должно быть скрыто при выборе уровня
 
-# заспавнить игрока
-func spawn_player(player: PackedScene) -> void:
-	in_game = true
-	for obj in get_children():
-		obj.queue_free()
-	var player_instance = player.instantiate()
-	player_instance.position = LevelHandler.spawn_position
-	add_child(player_instance)
+## по готовности
+func _ready() -> void:
+	for child in $MarginContainer/VBoxContainer.get_children():
+		if child is LevelCard:
+			child.play_button_pressed.connect(hide_ui)
 
-# удалить игрока
-func despawn_player() -> void:
-	in_game = false
-	for obj in get_children():
-		obj.queue_free()
+## скрытие меню выбора уровня
+func hide_ui():
+	level_selection_menu.hide()

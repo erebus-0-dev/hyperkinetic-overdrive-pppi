@@ -1,28 +1,35 @@
 extends Control
 
-class_name Settings
+## Меню настроек. Содержит всю логику обработки изменений настроек игры.
+## Сами настройки хранятся либо в статических классах движка (например,
+## RenderingServer), либо в синглтоне SettingsHandler
+class_name SettingsMenu
 
-@export var back_to_pause_button: Control
-@export var exit_to_menu_button: Control
-@export var volume_slider:Slider
-@export var ui_scale_slider:Slider
-@export var ui_scale_label:Label
-@export var render_scale_slider:Slider
-@export var render_scale_label:Label
-@export var msaa_check_box:CheckBox
-@export var fxaa_check_box:CheckBox
+@export var back_to_pause_button: Control ## кнопка для возвращения в меню паузы
+@export var exit_to_menu_button: Control ## кнопка для возвращения в главное меню
+@export var volume_slider:Slider ## слайдер громкости
+@export var ui_scale_slider:Slider ## слайдер размера интерфейса
+@export var ui_scale_label:Label ## надпись рамзера интерфейса
+@export var render_scale_slider:Slider ## слайдер разрешения рендера
+@export var render_scale_label:Label ## надпись разрешения рендера
+@export var msaa_check_box:CheckBox ## чекбокс msaa
+@export var fxaa_check_box:CheckBox ## чекбокс fxaa
 
-const config_filepath = "user://settings.cfg"
+const config_filepath = "user://settings.cfg" ## путь к файлу настроек
 
+## по готовности после инициализации
 func _ready() -> void:
 	load_settings()
 
+## при отрисовке
 func _on_draw() -> void:
 	update()
 
+## при переключении видимости
 func _on_visibility_changed() -> void:
 	update()
 
+## обновить состав менюшки
 func update() -> void:
 	if get_tree().is_paused():
 		back_to_pause_button.show()
@@ -31,6 +38,7 @@ func update() -> void:
 		back_to_pause_button.hide()
 		exit_to_menu_button.show()
 
+## сохранить настройки
 func save_settings():
 	var config = ConfigFile.new()
 	config.set_value("settings", "volume", AudioServer.get_bus_volume_db(0))
@@ -42,6 +50,7 @@ func save_settings():
 	config.set_value("settings", "msaa", msaa_check_box.button_pressed)
 	config.save(config_filepath)
 
+## загрузить настройки
 func load_settings():
 	var config = ConfigFile.new()
 	var err = config.load(config_filepath)
@@ -55,9 +64,11 @@ func load_settings():
 		_on_fxaa_check_box_toggled(config.get_value("settings", "fxaa", true))
 		_on_msaa_check_box_toggled(config.get_value("settings", "msaa", false))
 
+## получить RID основного вьюпорта
 func get_viewport_rid()-> RID:
 	return SettingsHandler.get_viewport().get_viewport_rid();
 
+## нажатие кнопки сброса
 func _on_reset_button_pressed() -> void:
 	_on_volume_slider_value_changed(0)
 	_on_ui_scale_slider_value_changed(1.0)
@@ -67,6 +78,7 @@ func _on_reset_button_pressed() -> void:
 	_on_msaa_check_box_toggled(false)
 	save_settings()
 
+## изменение громкости
 func _on_volume_slider_value_changed(value):
 	if volume_slider.value != value:
 		volume_slider.set_value_no_signal(value)
@@ -77,11 +89,13 @@ func _on_volume_slider_value_changed(value):
 	AudioServer.set_bus_volume_db(0, value)
 	save_settings()
 
+## изменение масштаба интерфейса - в процессе перетягивания
 func _on_ui_scale_slider_value_changed(value: float) -> void:
 	if ui_scale_slider.value != value:
 		ui_scale_slider.set_value_no_signal(value)
 	ui_scale_label.text = "x" + str(value)
 
+## изменение масштаба интерфейса - в конце перетягивания
 func _on_ui_scale_slider_drag_ended(value_changed: bool) -> void:
 	if !value_changed:
 		return
@@ -89,6 +103,7 @@ func _on_ui_scale_slider_drag_ended(value_changed: bool) -> void:
 	get_window().content_scale_factor = ui_scale_slider.value
 	save_settings()
 
+## изменение разрешения рендера
 func _on_render_scale_slider_value_changed(value: float) -> void:
 	if render_scale_slider.value != value:
 		render_scale_slider.set_value_no_signal(value)
@@ -97,6 +112,7 @@ func _on_render_scale_slider_value_changed(value: float) -> void:
 	RenderingServer.viewport_set_scaling_3d_scale(get_viewport_rid(), value)
 	save_settings()
 
+## переключение fxaa
 func _on_fxaa_check_box_toggled(toggled_on: bool) -> void:
 	if fxaa_check_box.button_pressed != toggled_on:
 		fxaa_check_box.set_pressed_no_signal(toggled_on)
@@ -107,6 +123,7 @@ func _on_fxaa_check_box_toggled(toggled_on: bool) -> void:
 		RenderingServer.viewport_set_screen_space_aa(get_viewport_rid(), RenderingServer.VIEWPORT_SCREEN_SPACE_AA_DISABLED)
 	save_settings()
 
+## переключение msaa
 func _on_msaa_check_box_toggled(toggled_on: bool) -> void:
 	if msaa_check_box.button_pressed != toggled_on:
 		msaa_check_box.set_pressed_no_signal(toggled_on)

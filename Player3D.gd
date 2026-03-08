@@ -1,79 +1,81 @@
 extends RigidBody3D
 
+## Аватар игрока.
 class_name Player3D
 
-var movement_input: Vector2 = Vector2.ZERO # ввод движения
-@export var acceleration_value: float = 50.0 # модификатор скорости движения
-var acceleration: Vector3 = Vector3.ZERO # ускорение
-@export var deacceleration_value: float = 50.0 # модификатор торможения
+var movement_input: Vector2 = Vector2.ZERO ## ввод движения
+@export var acceleration_value: float = 50.0 ## модификатор скорости движения
+var acceleration: Vector3 = Vector3.ZERO ## ускорение
+@export var deacceleration_value: float = 50.0 ## модификатор торможения
 
-@export var sprint_modifier: float = 2.0 # модификатор ускорения при беге
+@export var sprint_modifier: float = 2.0 ## модификатор ускорения при беге
 
-@export var max_available_jumps: int = 1 # максимальное кол-во прыжков после касания земли
-var available_jumps: int = max_available_jumps # текущее доступное кол-во прыжков
+@export var max_available_jumps: int = 1 ## максимальное кол-во прыжков после касания земли
+var available_jumps: int = max_available_jumps ## текущее доступное кол-во прыжков
 
-@export var max_dash_energy: float = 3 # максимальное кол-во дэшей
-var dash_energy: float = max_dash_energy # текущее доступное кол-во дэшей
+@export var max_dash_energy: float = 3 ## максимальное кол-во дэшей
+var dash_energy: float = max_dash_energy ## текущее доступное кол-во дэшей
 
-@export var dash_impulse: float = 2500.0 # импульс дэша
-@export var jump_impulse: float = 1500.0 # импульс прыжка
-@export var throw_impulse: float = 1000.0 # импульс броска
-@export var fast_falling_force: float = 10000.0 # сила быстрого падения
+@export var dash_impulse: float = 2500.0 ## импульс дэша
+@export var jump_impulse: float = 1500.0 ## импульс прыжка
+@export var throw_impulse: float = 1000.0 ## импульс броска
 
-@export var anti_drift_mod: float = 2.0 # модификатор системы анти-дрифта - сохранение инерции при повороте
-@export var air_control: bool = false # управление в полёте, основано на системе анти-дрифт
+@export var fast_falling_force: float = 10000.0 ## сила быстрого падения
 
-@export var aim_animation_speed_mod: float = 50.0 # модификатор скорости прицеливания
+@export var anti_drift_mod: float = 2.0 ## модификатор системы анти-дрифта - сохранение инерции при повороте
+@export var air_control: bool = false ## управление в полёте, основано на системе анти-дрифт
 
-var picked_object:Pickable3D # поднятый предмет
-var interaction_collider:Node3D # с чем сталкивается interaction_raycast
-var fall_velocity:float = 0.0 # скорость падения игрока
-var aim_pressed_on:bool = false # зажато ли прицеливание
-var crouch_pressed_on:bool = false # зажато ли карабканье
-var is_on_ground:bool = false # стоит ли игрок на земле
-var were_on_ground:bool = false # стоял ли игрок на земле в предыдущем кадре
+@export var aim_animation_speed_mod: float = 20.0 ## модификатор скорости прицеливания
 
-@onready var interaction_raycast:RayCast3D = $CameraJoint/InteractionRaycast # Raycast3D для нажатия кнопок и прочих взаимодействий с миром
+var picked_object:Pickable3D ## поднятый предмет
+var interaction_collider:Node3D ## с чем сталкивается interaction_raycast
+var fall_velocity:float = 0.0 ## скорость падения игрока
+var aim_pressed_on:bool = false ## зажато ли прицеливание
+var crouch_pressed_on:bool = false ## зажато ли карабканье
+var is_on_ground:bool = false ## стоит ли игрок на земле
+var were_on_ground:bool = false ## стоял ли игрок на земле в предыдущем кадре
 
-@onready var camera_joint = $CameraJoint # точка, вокруг которой вращается камера
-@onready var camera = $CameraJoint/CameraSpringArm3D/Camera3D # камера
-@onready var camera_spring_arm = $CameraJoint/CameraSpringArm3D # крепление камеры
-@onready var camera_position_marker = $CameraPositionMarker # маркер положения камеры, который камера постоянно преследует
-@onready var camera_animator= $CameraAnimationPlayer # аниматор камеры
+@onready var interaction_raycast:RayCast3D = $CameraJoint/InteractionRaycast ## Raycast3D для нажатия кнопок и прочих взаимодействий с миром
 
-@onready var mesh = $MeshInstance3D # главный меш игрока
+@onready var camera_joint:Node3D = $CameraJoint ## точка, вокруг которой вращается камера
+@onready var camera:Camera3D = $CameraJoint/CameraSpringArm3D/Camera3D ## камера
+@onready var camera_spring_arm:SpringArm3D = $CameraJoint/CameraSpringArm3D ## крепление камеры
+@onready var camera_position_marker:Marker3D = $CameraPositionMarker ## маркер положения камеры, который камера постоянно преследует
+@onready var camera_animator:AnimationPlayer= $CameraAnimationPlayer ## аниматор камеры
 
-@onready var ground_raycast = $GroundRaycast # рейкаст до земли
+@onready var mesh:MeshInstance3D = $MeshInstance3D ## главный меш игрока
 
-@onready var hand_marker = $CameraJoint/HandMarker # маркер позиции мяча при удержании
+@onready var ground_raycast:RayCast3D = $GroundRaycast ## рейкаст до земли
 
-@onready var crosshair = $Interface/Control/Crosshair # прицел
-@onready var dash_charge_bar = $Interface/Control/DashChargeBar # бар дэша
-@onready var throw_charge_bar = $Interface/Control/ThrowChargeBar # бар зарядки броска
-@onready var throw_charge_bar_anim = $Interface/Control/ThrowChargeBar/AnimationPlayer # аниматор бара зарядки броска
+@onready var hand_marker:Marker3D = $CameraJoint/HandMarker ## маркер позиции мяча при удержании
 
-@onready var flashlight = $CameraJoint/Flashlight # фонарик
+@onready var crosshair:AnimatedSprite2D = $Interface/Control/Crosshair ## прицел
+@onready var dash_charge_bar:TextureProgressBar = $Interface/Control/DashChargeBar ## бар дэша
+@onready var throw_charge_bar:TextureProgressBar = $Interface/Control/ThrowChargeBar ## бар зарядки броска
+@onready var throw_charge_bar_anim:AnimationPlayer = $Interface/Control/ThrowChargeBar/AnimationPlayer ## аниматор бара зарядки броска
 
-# бежит ли игрок
-func get_sprint_modifier() -> float:
-	if Input.is_action_pressed(&"sprint"):
-		return sprint_modifier
-	else:
-		return 1.0
+@onready var flashlight:SpotLight3D = $CameraJoint/Flashlight ## фонарик
 
-# установка прозрачности мяча
-func set_picked_object_transparency(value: float) -> void:
-	if picked_object != null and picked_object.has_node(^"MeshInstance3D"):
-		picked_object.get_node(^"MeshInstance3D").transparency = value
-
-# универсальное обновление бара
+## универсальное обновление бара в интерфейсе
 func update_bar(value:float, max_value:float, bar:Range) -> void:
 	if bar.max_value != max_value:
 		bar.max_value = max_value
 	if bar.value != value:
 		bar.value = value
 
-# по готовности
+## установка прозрачности мяча - УСТАРЕВШЕЕ
+func set_picked_object_transparency(value: float) -> void:
+	if picked_object != null and picked_object.has_node(^"MeshInstance3D"):
+		picked_object.get_node(^"MeshInstance3D").transparency = value
+
+## проверка - бежит ли игрок
+func get_sprint_modifier() -> float:
+	if Input.is_action_pressed(&"sprint"):
+		return sprint_modifier
+	else:
+		return 1.0
+
+## по готовности
 func _ready() -> void:
 	# автонастройка мыши
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -81,19 +83,17 @@ func _ready() -> void:
 	interaction_raycast.add_exception(self)
 	#ground_raycast.add_exception(self)
 
-# при деспавне игрока
+## при деспавне игрока
 func _exit_tree() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CONFINED)
 
-# обработка движения мыши
+## обработка движения мыши
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-		apply_torque_impulse(Vector3.DOWN * event.relative.x * SettingsHandler.mouse_sensetivity_horizontal)
-		#apply_torque(Vector3.DOWN * event.relative.x * SettingsHandler.mouse_sensetivity_horizontal)
-		#rotation += Vector3.DOWN * event.relative.x * SettingsHandler.mouse_sensetivity_horizontal / 180
-		camera_joint.rotation.x = clamp(camera_joint.rotation.x - event.relative.y * 0.002 * SettingsHandler.mouse_sensetivity_vertical, -PI/2, PI/2)
+		apply_torque_impulse(Vector3.DOWN * event.relative.x * SettingsHandler.mouse_sensetivity_horizontal * 0.5)
+		camera_joint.rotation.x = clamp(camera_joint.rotation.x - event.relative.y * 0.001 * SettingsHandler.mouse_sensetivity_vertical, -PI/2, PI/2)
 
-# каждый кадр отрисовки
+## каждый кадр отрисовки
 func _process(delta: float) -> void:
 	
 	# компенсация изменения таймскейла
@@ -101,7 +101,7 @@ func _process(delta: float) -> void:
 	
 	# во время паузы
 	if get_tree().paused:
-		# настройка режима мыши
+		## настройка режима мыши
 		if Input.get_mouse_mode() != Input.MOUSE_MODE_CONFINED:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CONFINED)
 	
@@ -205,12 +205,12 @@ func _process(delta: float) -> void:
 		
 		# пошатывание камеры
 		if is_on_ground:
-			camera_animator.speed_scale = min(sqrt(linear_velocity.length() * 0.1), 10.0)
+			camera_animator.speed_scale = min(sqrt(linear_velocity.length() * 0.05), 10.0)
 		else:
 			camera_animator.speed_scale = 1.0
 		if movement_input == Vector2.ZERO:
 			camera_animator.play(&"RESET")
-			camera_joint.position = lerp(camera_joint.position, camera_position_marker.position, SettingsHandler.camera_shake_weight * delta)
+			camera_joint.position = lerp(camera_joint.position, camera_position_marker.position, min(SettingsHandler.camera_shake_weight * delta, 1.0))
 		else:
 			if !camera_animator.is_playing():
 				if movement_input.y > 0:
@@ -224,7 +224,7 @@ func _process(delta: float) -> void:
 						camera_animator.play(&"sprint_mirrored")
 			camera_joint.position = lerp(camera_joint.position, camera_position_marker.position, min(SettingsHandler.camera_shake_weight * delta, 1.0))
 
-# каждый кадр физики
+## каждый кадр физики
 func _physics_process(delta: float) -> void:
 	
 	# обновлениен статуса нахождения на земле
@@ -232,7 +232,6 @@ func _physics_process(delta: float) -> void:
 	is_on_ground = ground_raycast.is_colliding()
 	
 	# сброс лимита прыжков
-	#if available_jumps < max_available_jumps && is_on_ground:
 	if available_jumps < max_available_jumps && is_on_ground && !were_on_ground:
 		available_jumps = max_available_jumps
 	
@@ -247,7 +246,6 @@ func _physics_process(delta: float) -> void:
 		linear_velocity += acceleration * delta / sqrt(sqrt(sqrt(1.0 + linear_velocity.length_squared())))
 	else:
 		if is_on_ground:
-			#acceleration = linear_velocity.normalized() * deacceleration_value * -1
 			acceleration = linear_velocity.normalized() * linear_velocity.length() * -1
 			linear_velocity += acceleration * delta
 		else:

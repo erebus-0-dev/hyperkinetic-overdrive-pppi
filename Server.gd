@@ -1,16 +1,37 @@
-extends Node
+extends Control
 
-# синглтон для механики остановки времени
-var time_scale_modifier:float = 10.0
-var player_ignore_time_scale:bool = true
-var active:bool = false
+## Меню паузы.
+class_name PauseMenu
 
+@export var main_menu: Control ## главное меню
+@export var settings:Control ## меню настроек
+
+## снять игру с паузы
+func unpause() -> void:
+	get_tree().set_pause(false)
+	if settings.visible:
+		settings.hide();
+	hide()
+
+## поставить игру на паузу
+func pause() -> void:
+	get_tree().set_pause(true)
+	show()
+
+## обработка кнопки escape
 func _process(_delta: float) -> void:
-	#if Input.is_action_just_pressed(&"time_stop"):
-		#get_tree().paused = !get_tree().paused
-	if Input.is_action_pressed(&"time_stop"):
-		Engine.time_scale = 1.0/time_scale_modifier
-		active = true
-	else:
-		Engine.time_scale = 1.0
-		active = false
+	if PlayerHandler.in_game:
+		if Input.is_action_just_pressed(&"escape"):
+			if get_tree().is_paused():
+				unpause()
+			else:
+				pause()
+
+## нажатие кнопки - вернуться в игру
+func _on_back_to_game_button_pressed() -> void:
+	unpause()
+
+## нажатие кнопки - вернуться в главное меню
+func _on_exit_to_menu_button_pressed() -> void:
+	hide()
+	main_menu.load_to_menu()

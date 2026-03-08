@@ -1,10 +1,11 @@
 extends Node
 
-class_name ObjectCall # базовый класс для отправляемых от механизмов вызовов
+## Автоматизированный вызов метода ноды.
+class_name ObjectCall
 
-@export var object_to_call:Node
-@export var method_to_call:StringName
-@export var arguments:Array
+@export var object_to_call:Node ## нода, метод которой будет вызван
+@export var method_to_call:StringName ## имя вызываемого метода
+@export var arguments:Array ## аргументы вызова метода
 
 func execute() -> void:
 	if object_to_call != null and object_to_call.has_method(method_to_call):

@@ -1,19 +1,23 @@
 extends Mechanism3D
 
+## МЕХАНИЗМ - Кнопка.
 class_name Button3D
 
-@export var toggle_mode:bool = true # режим кнопки, true - переключатель, false - нажимаемая кнопка
-@export var pressed_time:float = 1.0 # время, в течение которого кнопка будет нажата (если toggle_mode = false)
+@export var toggle_mode:bool = true ## режим кнопки, true - переключатель, false - нажимаемая кнопка
+@export var pressed_time:float = 1.0 ## время, в течение которого кнопка будет нажата (если toggle_mode = false)
 
-@onready var button_animator:AnimationPlayer = $AnimationPlayer
-@onready var press_timer:Timer = $PressTimer
+@onready var button_animator:AnimationPlayer = $ButtonAnimator ## аниматор кнопки
+@onready var press_timer:Timer = $PressTimer ## таймер нахождения в нажатом состоянии
 
-func on_activation() -> void:
+## при включении
+func is_enabled() -> void:
 	button_animator.queue(&"activated")
 
-func on_deactivation() -> void:
+## при выключении
+func is_disabled() -> void:
 	button_animator.queue(&"deactivated")
 
+## клик по кнопке
 func click():
 	if button_animator == null:
 		return
@@ -22,11 +26,12 @@ func click():
 	if toggle_mode:
 		switch()
 	else:
-		activate()
+		enable()
 		press_timer.stop()
 		press_timer.wait_time = pressed_time
 		press_timer.start()
 	button_animator.queue(&"pressed")
 
+## отжатие кнопки по таймеру
 func _on_press_timer_timeout() -> void:
-	deactivate()
+	disable()
